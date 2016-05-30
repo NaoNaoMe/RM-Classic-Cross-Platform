@@ -419,7 +419,7 @@ namespace rmApplication
 									itemDS.Size = result.Size;
 
 								}
-
+								
 								itemDS.Address = result.Address;
 
 							}
@@ -1908,7 +1908,7 @@ namespace rmApplication
 
 		private bool mainTimer_Tick()
 		{
-			// Warning
+			// Warning information
 			if( entryTmpMessage.Text != "" )
 			{
 				WarningShowUpCount++;
@@ -2350,7 +2350,7 @@ namespace rmApplication
 
 				if ((myComponents.MapList != null) &&
 					(myComponents.MapList.Count > 0) &&
-					(variableText != null)) {
+					(string.IsNullOrEmpty (variableText) != true) ) {
 					MapFactor result = myComponents.MapList.Find (key => key.VariableName == variableText);
 
 					if (result != null) {
@@ -2582,8 +2582,8 @@ namespace rmApplication
 			rendererText.Edited += TextEditedForVariable;
 			rendererText.EditingCanceled += TextEditingCanceled;
 			column = new TreeViewColumn ("Variable", rendererText);
-			column.Sizing = TreeViewColumnSizing.Fixed;
-			column.FixedWidth = 100;
+			column.MinWidth = 100;
+			column.Resizable = true;
 			column.SetCellDataFunc (rendererText, new Gtk.TreeCellDataFunc (RenderVariable));
 			treeView.AppendColumn (column);
 
@@ -2629,7 +2629,7 @@ namespace rmApplication
 			column = new TreeViewColumn ("Name", rendererText);
 			column.Sizing = TreeViewColumnSizing.Autosize;
 			column.MinWidth = 100;
-			column.Resizable = true;			//Resizable!!
+			column.Resizable = true;
 			column.SetCellDataFunc (rendererText, new Gtk.TreeCellDataFunc (RenderName));
 			treeView.AppendColumn (column);
 

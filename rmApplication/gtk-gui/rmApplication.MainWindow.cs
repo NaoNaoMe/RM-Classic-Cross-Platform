@@ -92,7 +92,7 @@ namespace rmApplication
 			this.vboxMain.Name = "vboxMain";
 			this.vboxMain.Spacing = 6;
 			// Container child vboxMain.Gtk.Box+BoxChild
-			this.UIManager.AddUiFromString ("<ui><menubar name='menubar'><menu name='FileAction' action='FileAction'><menu name='OpenAction' action='OpenAction'><menuitem name='openViewFileAction' action='openViewFileAction'/><menuitem name='openMapFileAction' action='openMapFileAction'/></menu><menu name='SaveAsAction' action='SaveAsAction'><menuitem name='saveViewFileAction' action='saveViewFileAction'/><menuitem name='saveMapFileAction' action='saveMapFileAction'/></menu><menuitem name='ExitAction' action='ExitAction'/></menu><menu name='ToolsAction' action='ToolsAction'><menuitem name='SetupAction' action='SetupAction'/></menu></menubar></ui>");
+			this.UIManager.AddUiFromString (@"<ui><menubar name='menubar'><menu name='FileAction' action='FileAction'><menu name='OpenAction' action='OpenAction'><menuitem name='openViewFileAction' action='openViewFileAction'/><menuitem name='openMapFileAction' action='openMapFileAction'/></menu><menu name='SaveAsAction' action='SaveAsAction'><menuitem name='saveViewFileAction' action='saveViewFileAction'/><menuitem name='saveMapFileAction' action='saveMapFileAction'/></menu><menuitem name='ExitAction' action='ExitAction'/></menu><menu name='ToolsAction' action='ToolsAction'><menuitem name='SetupAction' action='SetupAction'/></menu></menubar></ui>");
 			this.menubar = ((global::Gtk.MenuBar)(this.UIManager.GetWidget ("/menubar")));
 			this.menubar.Name = "menubar";
 			this.vboxMain.Add (this.menubar);

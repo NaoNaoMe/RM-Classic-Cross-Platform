@@ -22,11 +22,13 @@ namespace rmApplication
 		
 		private global::Gtk.Label labelAddress;
 		
-		private global::Gtk.Label labelEmpty;
-		
 		private global::Gtk.Label labelSize;
 		
 		private global::Gtk.Label labelVariable;
+		
+		private global::Gtk.RadioButton radiobuttonBigEndian;
+		
+		private global::Gtk.RadioButton radiobuttonLittleEndian;
 		
 		private global::Gtk.Frame frameText;
 		
@@ -60,7 +62,7 @@ namespace rmApplication
 			this.vboxMain.Name = "vboxMain";
 			this.vboxMain.Spacing = 6;
 			// Container child vboxMain.Gtk.Box+BoxChild
-			this.table1st = new global::Gtk.Table (((uint)(3)), ((uint)(4)), false);
+			this.table1st = new global::Gtk.Table (((uint)(5)), ((uint)(3)), false);
 			this.table1st.Name = "table1st";
 			this.table1st.RowSpacing = ((uint)(6));
 			this.table1st.ColumnSpacing = ((uint)(6));
@@ -73,10 +75,10 @@ namespace rmApplication
 			this.buttonCopy.Label = global::Mono.Unix.Catalog.GetString ("Copy");
 			this.table1st.Add (this.buttonCopy);
 			global::Gtk.Table.TableChild w1 = ((global::Gtk.Table.TableChild)(this.table1st [this.buttonCopy]));
-			w1.TopAttach = ((uint)(2));
-			w1.BottomAttach = ((uint)(3));
-			w1.LeftAttach = ((uint)(3));
-			w1.RightAttach = ((uint)(4));
+			w1.TopAttach = ((uint)(4));
+			w1.BottomAttach = ((uint)(5));
+			w1.LeftAttach = ((uint)(2));
+			w1.RightAttach = ((uint)(3));
 			w1.XOptions = ((global::Gtk.AttachOptions)(4));
 			w1.YOptions = ((global::Gtk.AttachOptions)(4));
 			// Container child table1st.Gtk.Table+TableChild
@@ -88,10 +90,10 @@ namespace rmApplication
 			this.buttonMake.Label = global::Mono.Unix.Catalog.GetString ("Make");
 			this.table1st.Add (this.buttonMake);
 			global::Gtk.Table.TableChild w2 = ((global::Gtk.Table.TableChild)(this.table1st [this.buttonMake]));
-			w2.TopAttach = ((uint)(1));
-			w2.BottomAttach = ((uint)(2));
-			w2.LeftAttach = ((uint)(3));
-			w2.RightAttach = ((uint)(4));
+			w2.TopAttach = ((uint)(3));
+			w2.BottomAttach = ((uint)(4));
+			w2.LeftAttach = ((uint)(2));
+			w2.RightAttach = ((uint)(3));
 			w2.XOptions = ((global::Gtk.AttachOptions)(4));
 			w2.YOptions = ((global::Gtk.AttachOptions)(4));
 			// Container child table1st.Gtk.Table+TableChild
@@ -103,8 +105,8 @@ namespace rmApplication
 			this.buttonRequest.Label = global::Mono.Unix.Catalog.GetString ("Request");
 			this.table1st.Add (this.buttonRequest);
 			global::Gtk.Table.TableChild w3 = ((global::Gtk.Table.TableChild)(this.table1st [this.buttonRequest]));
-			w3.LeftAttach = ((uint)(3));
-			w3.RightAttach = ((uint)(4));
+			w3.LeftAttach = ((uint)(2));
+			w3.RightAttach = ((uint)(3));
 			w3.XOptions = ((global::Gtk.AttachOptions)(4));
 			w3.YOptions = ((global::Gtk.AttachOptions)(4));
 			// Container child table1st.Gtk.Table+TableChild
@@ -161,38 +163,58 @@ namespace rmApplication
 			w7.XOptions = ((global::Gtk.AttachOptions)(4));
 			w7.YOptions = ((global::Gtk.AttachOptions)(4));
 			// Container child table1st.Gtk.Table+TableChild
-			this.labelEmpty = new global::Gtk.Label ();
-			this.labelEmpty.Name = "labelEmpty";
-			this.table1st.Add (this.labelEmpty);
-			global::Gtk.Table.TableChild w8 = ((global::Gtk.Table.TableChild)(this.table1st [this.labelEmpty]));
-			w8.TopAttach = ((uint)(1));
-			w8.BottomAttach = ((uint)(2));
-			w8.LeftAttach = ((uint)(2));
-			w8.RightAttach = ((uint)(3));
-			w8.YOptions = ((global::Gtk.AttachOptions)(4));
-			// Container child table1st.Gtk.Table+TableChild
 			this.labelSize = new global::Gtk.Label ();
 			this.labelSize.Name = "labelSize";
 			this.labelSize.LabelProp = global::Mono.Unix.Catalog.GetString ("Size:");
 			this.table1st.Add (this.labelSize);
-			global::Gtk.Table.TableChild w9 = ((global::Gtk.Table.TableChild)(this.table1st [this.labelSize]));
-			w9.TopAttach = ((uint)(2));
-			w9.BottomAttach = ((uint)(3));
-			w9.XOptions = ((global::Gtk.AttachOptions)(4));
-			w9.YOptions = ((global::Gtk.AttachOptions)(4));
+			global::Gtk.Table.TableChild w8 = ((global::Gtk.Table.TableChild)(this.table1st [this.labelSize]));
+			w8.TopAttach = ((uint)(2));
+			w8.BottomAttach = ((uint)(3));
+			w8.XOptions = ((global::Gtk.AttachOptions)(4));
+			w8.YOptions = ((global::Gtk.AttachOptions)(4));
 			// Container child table1st.Gtk.Table+TableChild
 			this.labelVariable = new global::Gtk.Label ();
 			this.labelVariable.Name = "labelVariable";
 			this.labelVariable.LabelProp = global::Mono.Unix.Catalog.GetString ("Variable:");
 			this.table1st.Add (this.labelVariable);
-			global::Gtk.Table.TableChild w10 = ((global::Gtk.Table.TableChild)(this.table1st [this.labelVariable]));
+			global::Gtk.Table.TableChild w9 = ((global::Gtk.Table.TableChild)(this.table1st [this.labelVariable]));
+			w9.XOptions = ((global::Gtk.AttachOptions)(4));
+			w9.YOptions = ((global::Gtk.AttachOptions)(4));
+			// Container child table1st.Gtk.Table+TableChild
+			this.radiobuttonBigEndian = new global::Gtk.RadioButton (global::Mono.Unix.Catalog.GetString ("Big Endian"));
+			this.radiobuttonBigEndian.CanFocus = true;
+			this.radiobuttonBigEndian.Name = "radiobuttonBigEndian";
+			this.radiobuttonBigEndian.DrawIndicator = true;
+			this.radiobuttonBigEndian.UseUnderline = true;
+			this.radiobuttonBigEndian.Group = new global::GLib.SList (global::System.IntPtr.Zero);
+			this.table1st.Add (this.radiobuttonBigEndian);
+			global::Gtk.Table.TableChild w10 = ((global::Gtk.Table.TableChild)(this.table1st [this.radiobuttonBigEndian]));
+			w10.TopAttach = ((uint)(1));
+			w10.BottomAttach = ((uint)(2));
+			w10.LeftAttach = ((uint)(2));
+			w10.RightAttach = ((uint)(3));
 			w10.XOptions = ((global::Gtk.AttachOptions)(4));
 			w10.YOptions = ((global::Gtk.AttachOptions)(4));
+			// Container child table1st.Gtk.Table+TableChild
+			this.radiobuttonLittleEndian = new global::Gtk.RadioButton (global::Mono.Unix.Catalog.GetString ("Little Endian"));
+			this.radiobuttonLittleEndian.CanFocus = true;
+			this.radiobuttonLittleEndian.Name = "radiobuttonLittleEndian";
+			this.radiobuttonLittleEndian.DrawIndicator = true;
+			this.radiobuttonLittleEndian.UseUnderline = true;
+			this.radiobuttonLittleEndian.Group = this.radiobuttonBigEndian.Group;
+			this.table1st.Add (this.radiobuttonLittleEndian);
+			global::Gtk.Table.TableChild w11 = ((global::Gtk.Table.TableChild)(this.table1st [this.radiobuttonLittleEndian]));
+			w11.TopAttach = ((uint)(2));
+			w11.BottomAttach = ((uint)(3));
+			w11.LeftAttach = ((uint)(2));
+			w11.RightAttach = ((uint)(3));
+			w11.XOptions = ((global::Gtk.AttachOptions)(4));
+			w11.YOptions = ((global::Gtk.AttachOptions)(4));
 			this.vboxMain.Add (this.table1st);
-			global::Gtk.Box.BoxChild w11 = ((global::Gtk.Box.BoxChild)(this.vboxMain [this.table1st]));
-			w11.Position = 0;
-			w11.Expand = false;
-			w11.Fill = false;
+			global::Gtk.Box.BoxChild w12 = ((global::Gtk.Box.BoxChild)(this.vboxMain [this.table1st]));
+			w12.Position = 0;
+			w12.Expand = false;
+			w12.Fill = false;
 			// Container child vboxMain.Gtk.Box+BoxChild
 			this.frameText = new global::Gtk.Frame ();
 			this.frameText.WidthRequest = 120;
@@ -220,9 +242,9 @@ namespace rmApplication
 			this.GtkLabelText.UseMarkup = true;
 			this.frameText.LabelWidget = this.GtkLabelText;
 			this.vboxMain.Add (this.frameText);
-			global::Gtk.Box.BoxChild w15 = ((global::Gtk.Box.BoxChild)(this.vboxMain [this.frameText]));
-			w15.Position = 1;
-			w15.Expand = false;
+			global::Gtk.Box.BoxChild w16 = ((global::Gtk.Box.BoxChild)(this.vboxMain [this.frameText]));
+			w16.Position = 1;
+			w16.Expand = false;
 			// Container child vboxMain.Gtk.Box+BoxChild
 			this.frameView = new global::Gtk.Frame ();
 			this.frameView.Name = "frameView";
@@ -248,14 +270,14 @@ namespace rmApplication
 			this.GtkLabelView.UseMarkup = true;
 			this.frameView.LabelWidget = this.GtkLabelView;
 			this.vboxMain.Add (this.frameView);
-			global::Gtk.Box.BoxChild w19 = ((global::Gtk.Box.BoxChild)(this.vboxMain [this.frameView]));
-			w19.Position = 2;
+			global::Gtk.Box.BoxChild w20 = ((global::Gtk.Box.BoxChild)(this.vboxMain [this.frameView]));
+			w20.Position = 2;
 			this.Add (this.vboxMain);
 			if ((this.Child != null)) {
 				this.Child.ShowAll ();
 			}
-			this.DefaultWidth = 410;
-			this.DefaultHeight = 308;
+			this.DefaultWidth = 366;
+			this.DefaultHeight = 371;
 			this.Show ();
 		}
 	}

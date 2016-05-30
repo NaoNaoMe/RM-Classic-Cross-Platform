@@ -10,11 +10,15 @@ namespace rmApplication
 {
 	public partial class MainWindow: Gtk.Window
 	{
+		private const string WINDOW_TITLE = "RM Classic CP";
+
 		SubViewControl subViewControl1;
 
 		public MainWindow () : base (Gtk.WindowType.Toplevel)
 		{
 			Build ();
+
+			this.Title = WINDOW_TITLE;
 
 			subViewControl1 = new SubViewControl ();
 
@@ -78,7 +82,7 @@ namespace rmApplication
 
 						if (viewName != null)
 						{
-							this.Title = viewName + " - " + this.Title;
+							this.Title = viewName + " - " + WINDOW_TITLE;
 						}
 					
 					}

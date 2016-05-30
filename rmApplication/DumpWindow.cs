@@ -254,8 +254,14 @@ namespace rmApplication
 
 							string textTmp = "";
 							if (typeData != numeralSystem.ASCII) {
-								foreach (var tmp in listTmp.Reverse<string>()) {
-									textTmp += tmp;
+								if (radiobuttonLittleEndian.Active)
+									foreach (var tmp in listTmp.Reverse<string>()) {
+										textTmp += tmp;
+									}
+								else {
+									foreach (var tmp in listTmp) {
+										textTmp += tmp;
+									}
 								}
 							} else {
 								foreach (var tmp in listTmp) {
