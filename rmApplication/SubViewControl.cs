@@ -1153,8 +1153,9 @@ namespace rmApplication
 
 			// create model
 			ViewSetting tmp = new ViewSetting ();
-			tmp.DataSetting.Add (new DataSetting());
-			tmp.DataSetting.Add (new DataSetting());
+			for (int i = 0; i < 32; i++) {
+				tmp.DataSetting.Add (new DataSetting());
+			}
 
 			loadViewSettingFile (tmp);
 
@@ -2526,9 +2527,9 @@ namespace rmApplication
 
 			// column for RowCount
 			rendererText = new CellRendererText ();
-			column = new TreeViewColumn ("Count", rendererText);
+			column = new TreeViewColumn ("", rendererText);
 			column.Sizing = TreeViewColumnSizing.Fixed;
-			column.FixedWidth = 60;
+			column.FixedWidth = 25;
 			column.SetCellDataFunc (rendererText, new Gtk.TreeCellDataFunc (RenderRowCount));
 			treeView.AppendColumn (column);
 

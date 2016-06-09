@@ -30,6 +30,7 @@ namespace rmApplication
 			saveMapFileAction.Activated += new EventHandler (saveMapFileToolStripMenuItem_Click);
 			SetupAction.Activated += new EventHandler (optionsToolStripMenuItem_Click);
 			ExitAction.Activated += new EventHandler (exitToolStripMenuItem_Click);
+			AboutAction.Activated += new  EventHandler (aboutToolStripMenuItem_Click);
 		}
 
 		protected void OnDeleteEvent (object sender, DeleteEventArgs a)
@@ -250,11 +251,18 @@ namespace rmApplication
 			{
 				OptionDialog od = new OptionDialog (subViewControl1);
 				od.Run ();
-				od.Destroy();
+				od.Destroy ();
 
 			}
 
 		}
+
+		private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
+		{
+			AboutDialog tmp = new AboutDialog ();
+			tmp.Show ();
+		}
+
 
 	}
 

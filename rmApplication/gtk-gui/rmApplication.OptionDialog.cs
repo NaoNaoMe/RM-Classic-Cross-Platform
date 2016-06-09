@@ -61,7 +61,9 @@ namespace rmApplication
 			global::Stetic.Gui.Initialize (this);
 			// Widget rmApplication.OptionDialog
 			this.Name = "rmApplication.OptionDialog";
+			this.Title = global::Mono.Unix.Catalog.GetString ("Option");
 			this.WindowPosition = ((global::Gtk.WindowPosition)(4));
+			this.Resizable = false;
 			// Internal child rmApplication.OptionDialog.VBox
 			global::Gtk.VBox w1 = this.VBox;
 			w1.Name = "dialog1_VBox";

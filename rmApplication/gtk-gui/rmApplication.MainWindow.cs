@@ -32,6 +32,10 @@ namespace rmApplication
 		
 		private global::Gtk.Action SetupAction;
 		
+		private global::Gtk.Action HelpAction;
+		
+		private global::Gtk.Action AboutAction;
+		
 		private global::Gtk.VBox vboxMain;
 		
 		private global::Gtk.MenuBar menubar;
@@ -82,6 +86,12 @@ namespace rmApplication
 			this.SetupAction = new global::Gtk.Action ("SetupAction", global::Mono.Unix.Catalog.GetString ("Setup"), null, null);
 			this.SetupAction.ShortLabel = global::Mono.Unix.Catalog.GetString ("Setup");
 			w1.Add (this.SetupAction, null);
+			this.HelpAction = new global::Gtk.Action ("HelpAction", global::Mono.Unix.Catalog.GetString ("Help"), null, null);
+			this.HelpAction.ShortLabel = global::Mono.Unix.Catalog.GetString ("Help");
+			w1.Add (this.HelpAction, null);
+			this.AboutAction = new global::Gtk.Action ("AboutAction", global::Mono.Unix.Catalog.GetString ("About"), null, null);
+			this.AboutAction.ShortLabel = global::Mono.Unix.Catalog.GetString ("About");
+			w1.Add (this.AboutAction, null);
 			this.UIManager.InsertActionGroup (w1, 0);
 			this.AddAccelGroup (this.UIManager.AccelGroup);
 			this.Name = "rmApplication.MainWindow";
@@ -92,7 +102,7 @@ namespace rmApplication
 			this.vboxMain.Name = "vboxMain";
 			this.vboxMain.Spacing = 6;
 			// Container child vboxMain.Gtk.Box+BoxChild
-			this.UIManager.AddUiFromString (@"<ui><menubar name='menubar'><menu name='FileAction' action='FileAction'><menu name='OpenAction' action='OpenAction'><menuitem name='openViewFileAction' action='openViewFileAction'/><menuitem name='openMapFileAction' action='openMapFileAction'/></menu><menu name='SaveAsAction' action='SaveAsAction'><menuitem name='saveViewFileAction' action='saveViewFileAction'/><menuitem name='saveMapFileAction' action='saveMapFileAction'/></menu><menuitem name='ExitAction' action='ExitAction'/></menu><menu name='ToolsAction' action='ToolsAction'><menuitem name='SetupAction' action='SetupAction'/></menu></menubar></ui>");
+			this.UIManager.AddUiFromString (@"<ui><menubar name='menubar'><menu name='FileAction' action='FileAction'><menu name='OpenAction' action='OpenAction'><menuitem name='openViewFileAction' action='openViewFileAction'/><menuitem name='openMapFileAction' action='openMapFileAction'/></menu><menu name='SaveAsAction' action='SaveAsAction'><menuitem name='saveViewFileAction' action='saveViewFileAction'/><menuitem name='saveMapFileAction' action='saveMapFileAction'/></menu><menuitem name='ExitAction' action='ExitAction'/></menu><menu name='ToolsAction' action='ToolsAction'><menuitem name='SetupAction' action='SetupAction'/></menu><menu name='HelpAction' action='HelpAction'><menuitem name='AboutAction' action='AboutAction'/></menu></menubar></ui>");
 			this.menubar = ((global::Gtk.MenuBar)(this.UIManager.GetWidget ("/menubar")));
 			this.menubar.Name = "menubar";
 			this.vboxMain.Add (this.menubar);
