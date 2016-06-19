@@ -129,7 +129,7 @@
       </widget>
     </child>
   </widget>
-  <widget class="Gtk.Bin" id="rmApplication.SubViewControl" design-size="798 344">
+  <widget class="Gtk.Bin" id="rmApplication.SubViewControl" design-size="894 344">
     <property name="MemberName" />
     <property name="Visible">False</property>
     <child>
@@ -168,14 +168,28 @@
               </packing>
             </child>
             <child>
+              <widget class="Gtk.CheckButton" id="checkbuttonCustomize">
+                <property name="MemberName" />
+                <property name="CanFocus">True</property>
+                <property name="Label" translatable="yes">Customize</property>
+                <property name="DrawIndicator">True</property>
+                <property name="HasLabel">True</property>
+                <property name="UseUnderline">True</property>
+              </widget>
+              <packing>
+                <property name="Position">2</property>
+                <property name="AutoSize">True</property>
+              </packing>
+            </child>
+            <child>
               <widget class="Gtk.Label" id="labelTiming">
                 <property name="MemberName" />
                 <property name="WidthRequest">80</property>
                 <property name="LabelProp" translatable="yes">Timing(ms):</property>
               </widget>
               <packing>
-                <property name="Position">2</property>
-                <property name="AutoSize">False</property>
+                <property name="Position">3</property>
+                <property name="AutoSize">True</property>
                 <property name="Expand">False</property>
                 <property name="Fill">False</property>
               </packing>
@@ -190,7 +204,7 @@
                 <property name="InvisibleChar">●</property>
               </widget>
               <packing>
-                <property name="Position">3</property>
+                <property name="Position">4</property>
                 <property name="AutoSize">False</property>
                 <property name="Expand">False</property>
                 <property name="Fill">False</property>
@@ -206,7 +220,7 @@
                 <property name="UseUnderline">True</property>
               </widget>
               <packing>
-                <property name="Position">4</property>
+                <property name="Position">5</property>
                 <property name="AutoSize">False</property>
                 <property name="Expand">False</property>
                 <property name="Fill">False</property>
@@ -222,7 +236,7 @@
                 <property name="UseUnderline">True</property>
               </widget>
               <packing>
-                <property name="Position">5</property>
+                <property name="Position">6</property>
                 <property name="AutoSize">False</property>
                 <property name="Expand">False</property>
                 <property name="Fill">False</property>
@@ -233,7 +247,7 @@
                 <property name="MemberName" />
               </widget>
               <packing>
-                <property name="Position">6</property>
+                <property name="Position">7</property>
                 <property name="AutoSize">False</property>
               </packing>
             </child>
@@ -247,7 +261,7 @@
                 <property name="UseUnderline">True</property>
               </widget>
               <packing>
-                <property name="Position">7</property>
+                <property name="Position">8</property>
                 <property name="AutoSize">True</property>
                 <property name="Expand">False</property>
                 <property name="Fill">False</property>
@@ -263,7 +277,7 @@
                 <property name="UseUnderline">True</property>
               </widget>
               <packing>
-                <property name="Position">8</property>
+                <property name="Position">9</property>
                 <property name="AutoSize">True</property>
                 <property name="Expand">False</property>
                 <property name="Fill">False</property>

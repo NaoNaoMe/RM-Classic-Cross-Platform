@@ -4,7 +4,6 @@ using System.Collections;
 using System.Collections.Generic;
 
 using Gtk;
-using GLib;
 
 namespace rmApplication
 {
@@ -45,7 +44,9 @@ namespace rmApplication
 			public int NetPort { set; get; }
 			public string Password { set; get; }
 
+			public bool RsrcActiveFlg { set; get; }
 			public bool CommActiveFlg { set; get; }
+			public bool LoggingActiveFlg { set; get; }
 			public string ValidMapPath { set; get; }
 			public DateTime ValidMapLastWrittenDate { set; get; }
 
@@ -64,7 +65,9 @@ namespace rmApplication
 				NetPort = 49152;
 				Password = "0000FFFF";
 
+				RsrcActiveFlg = false;
 				CommActiveFlg = false;
+				LoggingActiveFlg = false;
 				ValidMapPath = "";
 				ValidMapLastWrittenDate = DateTime.MinValue;
 
@@ -85,7 +88,9 @@ namespace rmApplication
 				NetPort = data.NetPort;
 				Password = data.Password;
 
+				RsrcActiveFlg = data.RsrcActiveFlg;
 				CommActiveFlg = data.CommActiveFlg;
+				LoggingActiveFlg = data.LoggingActiveFlg;
 				ValidMapPath = data.ValidMapPath;
 				ValidMapLastWrittenDate = data.ValidMapLastWrittenDate;
 
@@ -114,25 +119,21 @@ namespace rmApplication
 			public byte[] ReadBuff;
 		}
 
-		private const int COLUMN_NUM = 32;
+		private const int DEFAULT_COLUMNS = 16;
 		private const int SELECT_NUM = 32;
 		private const int MAX_TOTAL_SIZE = 128;
 
-		public const string GROUP_TEMPORARY_TAG = "x:Test";
+		private const string GROUP_TEMPORARY_TAG = "x:Test";
 		private const string TARGET_VER_TAG = "_TgV";
 		private const string SETTING_VER_TAG = "_StV";
-
-		private const string DATALOG_LOGGING_TEXT = "Logging";
-		private const string DATALOG_START_TEXT = "Start Log";
 
 		private const int COMM_LOG_MAX = 500;
 		private const int RCV_LOGDATA_MAX = 10000;
 
-		private const string RSRC_OPEN = "Rsrc Open";
-		private const string RSRC_CLOSE = "Rsrc Close";
-
-		private const string COMM_OPEN = "Comm Open";
-		private const string COMM_CLOSE = "Comm Close";
+		private const int ERR_NUM_NOTHING = 0x00;
+		private const int ERR_NUM_SIZE = 0x01;
+		private const int ERR_NUM_ADDRESS = 0x02;
+		private const int ERR_NUM_OFFSET = 0x04;
 
 		private DumpWindow DumpFormInstance;
 
@@ -379,16 +380,6 @@ namespace rmApplication
 			return retFlg;
 		}
 
-		#if false
-		public void customizeDataGridView()
-		{
-		}
-
-		public void changeDataGridViewColumn()
-		{
-		}
-		#endif
-
 		private void reviseDataFromViewSettingList()
 		{
 			foreach (var factor in myComponents.ViewSettingList)
@@ -440,7 +431,7 @@ namespace rmApplication
 		}
 
 
-		private void refreshDataGridView( int index )
+		private void refreshTreeView( int index )
 		{
 			if (myComponents.ViewSettingList == null)
 			{
@@ -495,7 +486,7 @@ namespace rmApplication
 
 		}
 
-		public bool checkDataGridViewCells()
+		public bool checkTreeViewCells()
 		{
 			int maxIndex = 0;
 
@@ -513,7 +504,7 @@ namespace rmApplication
 					{
 						maxIndex++;
 
-						if ( factor.ErrNum != 0 )
+						if ( factor.ErrNum != ERR_NUM_NOTHING )
 						{
 							errFlg = true;
 
@@ -667,9 +658,7 @@ namespace rmApplication
 
 		private void readDUTVersion()
 		{
-			bool retFlg = commResource_CheckState();
-
-			if (retFlg == false)
+			if (myComponents.CommActiveFlg == false)
 			{
 				return;
 
@@ -682,9 +671,7 @@ namespace rmApplication
 
 		private void renewLogSetting()
 		{
-			bool retFlg = commResource_CheckState();
-
-			if (retFlg == false)
+			if (myComponents.CommActiveFlg == false)
 			{
 				return;
 
@@ -787,9 +774,7 @@ namespace rmApplication
 
 		private void renewTimingSetting(string timingNum)
 		{
-			bool retFlg = commResource_CheckState();
-
-			if (retFlg == false)
+			if (myComponents.CommActiveFlg == false)
 			{
 				return;
 
@@ -806,9 +791,7 @@ namespace rmApplication
 
 		private void writeData(string size, string address, string offset, string writeVal)
 		{
-			bool retFlg = commResource_CheckState();
-
-			if (retFlg == false)
+			if (myComponents.CommActiveFlg == false)
 			{
 				return;
 
@@ -929,7 +912,10 @@ namespace rmApplication
 
 			if (reqFlg == true)
 			{
-				if (serialPort.IsOpen == false)
+				if ((serialPort.IsOpen == false) &&
+					(myComponents.CommunicationMode == Components.CommMode.Serial) &&
+					(string.IsNullOrEmpty (myComponents.CommPort) == false) &&
+					(myComponents.CommBaudRate != 0))
 				{
 					serialPort.PortName = myComponents.CommPort;
 					serialPort.BaudRate = myComponents.CommBaudRate;
@@ -965,20 +951,6 @@ namespace rmApplication
 					retFlg = true;
 
 				}
-
-			}
-
-			return retFlg;
-		}
-
-
-		private bool serialPort_CheckState()
-		{
-			bool retFlg = false;
-
-			if (serialPort.IsOpen == true)
-			{
-				retFlg = true;
 
 			}
 
@@ -1044,25 +1016,32 @@ namespace rmApplication
 
 			if (reqFlg == true)
 			{
-				try
+				if ((myComponents.CommunicationMode == Components.CommMode.NetWork) &&
+					(string.IsNullOrEmpty (myComponents.NetIP) == false) &&
+					(myComponents.NetPort != 0))
 				{
-					SocketsParam.Client = new System.Net.Sockets.TcpClient();
-					SocketsParam.ReadBuff = new byte[16];
-					SocketsParam.Client.Connect(myComponents.NetIP, myComponents.NetPort);
+					try
+					{
+						SocketsParam.Client = new System.Net.Sockets.TcpClient();
+						SocketsParam.ReadBuff = new byte[16];
+						SocketsParam.Client.Connect(myComponents.NetIP, myComponents.NetPort);
 
-					System.Net.Sockets.NetworkStream stream = SocketsParam.Client.GetStream();
+						System.Net.Sockets.NetworkStream stream = SocketsParam.Client.GetStream();
 
-					stream.BeginRead(SocketsParam.ReadBuff, 0, SocketsParam.ReadBuff.Length, new AsyncCallback(sockets_DataReceived), SocketsParam);
+						stream.BeginRead(SocketsParam.ReadBuff, 0, SocketsParam.ReadBuff.Length, new AsyncCallback(sockets_DataReceived), SocketsParam);
 
-					stream = SocketsParam.Client.GetStream();
-					retFlg = true;
+						stream = SocketsParam.Client.GetStream();
+						retFlg = true;
+
+					}
+					catch (Exception ex)
+					{
+						MessageBox.ShowWarning(ex.Message);
+
+					}
 
 				}
-				catch (Exception ex)
-				{
-					MessageBox.ShowWarning(ex.Message);
-
-				}
+				
 
 			}
 			else
@@ -1073,23 +1052,6 @@ namespace rmApplication
 					retFlg = true;
 
 				}
-
-			}
-
-			return retFlg;
-		}
-
-
-		private bool sockets_CheckState()
-		{
-			bool retFlg = false;
-
-			if ((myComponents.CommunicationMode == Components.CommMode.NetWork) &&
-				(myComponents.CommActiveFlg == true) &&
-				(myComponents.NetIP != null) &&
-				(myComponents.NetPort != 0))
-			{
-				retFlg = true;
 
 			}
 
@@ -1108,12 +1070,20 @@ namespace rmApplication
 				break;
 
 			case Components.CommMode.Serial:
-				retFlg = serialPort_CheckState();
+				if (serialPort.IsOpen == true)
+				{
+					retFlg = true;
+
+				}
 
 				break;
 
 			case Components.CommMode.NetWork:
-				retFlg = sockets_CheckState();
+				if ( SocketsParam.Client.Connected == true)
+				{
+					retFlg = true;
+
+				}
 
 				break;
 
@@ -1153,7 +1123,7 @@ namespace rmApplication
 
 			// create model
 			ViewSetting tmp = new ViewSetting ();
-			for (int i = 0; i < 32; i++) {
+			for (int i = 0; i < DEFAULT_COLUMNS; i++) {
 				tmp.DataSetting.Add (new DataSetting());
 			}
 
@@ -1163,14 +1133,15 @@ namespace rmApplication
 
 			serialPort = new System.IO.Ports.SerialPort("MySerialPort", 38400);
 
-			GLib.Timeout.Add(10, new TimeoutHandler(serialPort_DataReceived));
-			GLib.Timeout.Add(100, new TimeoutHandler(mainTimer_Tick));
+			GLib.Timeout.Add(10, new GLib.TimeoutHandler(serialPort_DataReceived));
+			GLib.Timeout.Add(100, new GLib.TimeoutHandler(mainTimer_Tick));
 
 			buttonRsrc.Clicked += new EventHandler (opclRsrcButton_Click);
 			buttonComm.Clicked += new EventHandler (opclCommButton_Click);
 			entryTiming.KeyPressEvent += new KeyPressEventHandler (timingValTextBox_KeyPress);
 			buttonDumpData.Clicked += new EventHandler (dumpEntryButton_Click);
 			buttonDataLog.Clicked += new EventHandler (boolDataLogButton_Click);
+			checkbuttonCustomize.Clicked += new EventHandler (checkbuttonCustomize_Click);
 
 			changeDispTx(false);
 			changeDispRx(false);
@@ -1199,499 +1170,6 @@ namespace rmApplication
 			
 		}
 
-		#if false
-		private void dataGridView_CellContentClick(object sender, DataGridViewCellEventArgs e)
-		{
-			if ((e.ColumnIndex < 0) ||
-				(e.RowIndex < 0))
-			{
-				return;
-
-			}
-			else
-			{
-				DataGridView dgv = (DataGridView)sender;
-				
-				if (dgv.Columns[e.ColumnIndex].Name == DgvRowName.WrTrg.ToString())
-				{
-					if ((string.IsNullOrEmpty(dgv.Rows[e.RowIndex].Cells[(int)DgvRowName.Size].Value as string) == true) ||
-						(string.IsNullOrEmpty(dgv.Rows[e.RowIndex].Cells[(int)DgvRowName.Type].Value as string) == true) ||
-						(string.IsNullOrEmpty(dgv.Rows[e.RowIndex].Cells[(int)DgvRowName.WriteValue].Value as string) == true))
-					{
-						MessageBox.Show("Size, Type or WriteValue might be empty.",
-											"Caution",
-											MessageBoxButtons.OK,
-											MessageBoxIcon.Warning);
-						return;
-
-					}
-
-					string size = dgv.Rows[e.RowIndex].Cells[(int)DgvRowName.Size].Value.ToString();
-					string type = dgv.Rows[e.RowIndex].Cells[(int)DgvRowName.Type].Value.ToString();
-					string writeValue = dgv.Rows[e.RowIndex].Cells[(int)DgvRowName.WriteValue].Value.ToString();
-
-					Exception ex_text = null;
-
-					string writeText = TypeConvert.ToHexChars(type, int.Parse(size), writeValue, out ex_text);
-
-					if (ex_text != null)
-					{
-						MessageBox.Show(ex_text.Message);
-
-						//Recovery writeValue
-						writeText = dgv.Rows[e.RowIndex].Cells[(int)DgvRowName.WriteText].Value.ToString();
-						writeValue = TypeConvert.FromHexChars(type, int.Parse(size), writeText);
-						dgv.Rows[e.RowIndex].Cells[(int)DgvRowName.WriteValue].Value = writeValue;
-						
-
-					}
-					else if (writeText == null)
-					{
-						MessageBox.Show("Write data is invalid.",
-											"Caution",
-											MessageBoxButtons.OK,
-											MessageBoxIcon.Warning);
-
-						//Recovery writeValue
-						writeText = dgv.Rows[e.RowIndex].Cells[(int)DgvRowName.WriteText].Value.ToString();
-						writeValue = TypeConvert.FromHexChars(type, int.Parse(size), writeText);
-						dgv.Rows[e.RowIndex].Cells[(int)DgvRowName.WriteValue].Value = writeValue;
-						
-
-					}
-					else
-					{
-						dgv.Rows[e.RowIndex].Cells[(int)DgvRowName.WriteText].Value = writeText;
-
-						bool retFlg = commResource_CheckState();
-
-						if (retFlg == false)
-						{
-
-						}
-						else if ((string.IsNullOrEmpty(dgv.Rows[e.RowIndex].Cells[(int)DgvRowName.Address].Value as string) == true) ||
-								(string.IsNullOrEmpty(dgv.Rows[e.RowIndex].Cells[(int)DgvRowName.Offset].Value as string) == true))
-						{
-							MessageBox.Show("Address or offset data might be empty.",
-												"Caution",
-												MessageBoxButtons.OK,
-												MessageBoxIcon.Warning);
-						}
-						else
-						{
-							string address = dgv.Rows[e.RowIndex].Cells[(int)DgvRowName.Address].Value.ToString();
-							string offset = dgv.Rows[e.RowIndex].Cells[(int)DgvRowName.Offset].Value.ToString();
-
-							writeData(size, address, offset, writeText);
-
-						}
-
-					}
-
-				}
-				else if (dgv.Columns[e.ColumnIndex].Name == DgvRowName.Type.ToString())
-				{
-					string type = null;
-
-					if (dgv.Rows[e.RowIndex].Cells[(int)DgvRowName.Type].Value != null)
-					{
-						type = dgv.Rows[e.RowIndex].Cells[(int)DgvRowName.Type].Value.ToString();
-
-					}
-					else
-					{
-						type = numeralSystem.BIN;
-
-					}
-
-					string readText = null;
-
-					if (dgv.Rows[e.RowIndex].Cells[(int)DgvRowName.ReadText].Value != null)
-					{
-						readText = dgv.Rows[e.RowIndex].Cells[(int)DgvRowName.ReadText].Value.ToString();
-
-					}
-
-					string writeText = null;
-
-					if (dgv.Rows[e.RowIndex].Cells[(int)DgvRowName.WriteText].Value != null)
-					{
-						writeText = dgv.Rows[e.RowIndex].Cells[(int)DgvRowName.WriteText].Value.ToString();
-
-					}
-
-					string size = null;
-
-					if (dgv.Rows[e.RowIndex].Cells[(int)DgvRowName.Size].Value != null)
-					{
-						size = dgv.Rows[e.RowIndex].Cells[(int)DgvRowName.Size].Value.ToString();
-
-					}
-					else
-					{
-						size = "1";
-
-					}
-
-					switch (type)
-					{
-						case numeralSystem.BIN:
-							type = numeralSystem.UDEC;
-							break;
-
-						case numeralSystem.UDEC:
-							type = numeralSystem.DEC;
-							break;
-
-						case numeralSystem.DEC:
-							type = numeralSystem.HEX;
-							break;
-
-						case numeralSystem.HEX:
-							if (size != "4")
-							{
-								type = numeralSystem.BIN;
-							}
-							else
-							{
-								type = numeralSystem.FLT;
-							}
-							break;
-
-						case numeralSystem.FLT:
-							type = numeralSystem.BIN;
-							break;
-
-						default:
-							type = numeralSystem.HEX;
-							break;
-
-					}
-
-					string readVal = TypeConvert.FromHexChars(type, int.Parse(size), readText);
-					string writeVal = TypeConvert.FromHexChars(type, int.Parse(size), writeText);
-
-					dgv.Rows[e.RowIndex].Cells[(int)DgvRowName.Type].Value = type;
-
-					if (readVal != null)
-					{
-						dgv.Rows[e.RowIndex].Cells[(int)DgvRowName.ReadValue].Value = readVal;
-
-					}
-
-					if (writeVal != null)
-					{
-						dgv.Rows[e.RowIndex].Cells[(int)DgvRowName.WriteValue].Value = writeVal;
-
-					}
-
-				}
-				else
-				{
-
-				}
-
-			}
-
-		}
-
-		private void dataGridView_CellEndEdit(object sender, DataGridViewCellEventArgs e)
-		{
-			if (myComponents.CustomizingModeFlg == false)
-			{
-				return;
-
-			}
-
-			if ((e.ColumnIndex < 0) ||
-				(e.RowIndex < 0))
-			{
-				return;
-
-			}
-			else
-			{
-				DataGridView dgv = (DataGridView)sender;
-
-				if (dgv.Columns[e.ColumnIndex].Name == DgvRowName.Variable.ToString())
-				{
-					if ((myComponents.MapList != null) &&
-						(myComponents.MapList.Count > 0) &&
-						(dgv.Rows[e.RowIndex].Cells[(int)DgvRowName.Variable].Value != null))
-					{
-						String tmpVariable = dgv.Rows[e.RowIndex].Cells[(int)DgvRowName.Variable].Value.ToString();
-
-						MapFactor result = myComponents.MapList.Find(key => key.VariableName == tmpVariable);
-
-						if (result != null)
-						{
-							if ((int.Parse(result.Size) >= 1) &&
-								 (int.Parse(result.Size) <= 4))
-							{
-								dgv.Rows[e.RowIndex].Cells[(int)DgvRowName.Size].Value = result.Size;
-
-							}
-
-							dgv.Rows[e.RowIndex].Cells[(int)DgvRowName.Address].Value = result.Address;
-
-							if (dgv.Rows[e.RowIndex].Cells[(int)DgvRowName.Offset].Value == null)
-							{
-								dgv.Rows[e.RowIndex].Cells[(int)DgvRowName.Offset].Value = "0";
-
-							}
-
-							if (dgv.Rows[e.RowIndex].Cells[(int)DgvRowName.Type].Value == null)
-							{
-								dgv.Rows[e.RowIndex].Cells[(int)DgvRowName.Type].Value = numeralSystem.HEX;
-
-							}
-
-						}
-						else
-						{
-							dgv.Rows[e.RowIndex].Cells[(int)DgvRowName.Check].Value = false;
-							dgv.Rows[e.RowIndex].Cells[(int)DgvRowName.Address].Value = null;
-
-						}
-
-					}
-
-				}
-				else if (dgv.Columns[e.ColumnIndex].Name == DgvRowName.Group.ToString())
-				{
-					if (e.RowIndex == 0)
-					{
-						//Group tag is a cell at the upper left.
-						String groupTag = dgv.Rows[e.RowIndex].Cells[(int)DgvRowName.Group].Value.ToString();
-
-						pageValComboBox.Items[pageValComboBox.SelectedIndex] = groupTag;
-
-					}
-					else
-					{
-						dgv.Rows[e.RowIndex].Cells[(int)DgvRowName.Group].Value = null;
-
-					}
-
-				}
-
-			}
-
-		}
-
-		private void dataGridView_EditingControlShowing(object sender, DataGridViewEditingControlShowingEventArgs e)
-		{
-			DataGridView dgv = (DataGridView)sender;
-
-			if (e.Control is TextBox)
-			{
-				TextBox tb = (TextBox)e.Control;
-
-				if (dgv.CurrentCell.OwningColumn.Name == DgvRowName.Variable.ToString())
-				{
-					tb.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
-
-					tb.AutoCompleteSource = AutoCompleteSource.CustomSource;
-					tb.AutoCompleteCustomSource = AutoCompleteSourceForVariable;
-				}
-				else
-				{
-					tb.AutoCompleteMode = AutoCompleteMode.None;
-				}
-
-			}
-
-		}
-
-		private void dataGridView_KeyDown(object sender, KeyEventArgs e)
-		{
-			if( ( e.KeyCode == Keys.Delete ) &&
-				( myComponents.CustomizingModeFlg == true ) )
-			{
-				foreach (DataGridViewCell cell in dataGridView.SelectedCells)
-				{
-					dataGridView[cell.ColumnIndex, cell.RowIndex].Value = null;
-				}
-
-			}
-			
-		}
-
-		private void dataGridView_MouseDown(object sender, MouseEventArgs e)
-		{
-			if (e.Button == MouseButtons.Right)
-			{
-				var hitTest = dataGridView.HitTest(e.X, e.Y);
-				if (hitTest.RowIndex >= 0)
-				{
-					dataGridView.ClearSelection();
-					dataGridView.Rows[hitTest.RowIndex].Selected = true;
-
-				}
-
-			}
-
-		}
-
-		private void contextMenuStrip_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
-		{
-			ToolStripItem item = e.ClickedItem;
-
-			var name = item.ToString();
-
-			Int32 rowValue = dataGridView.Rows.GetFirstRow(DataGridViewElementStates.Selected);
-
-			if (rowValue < 0)
-			{
-				return;
-			}
-
-			switch (name)
-			{
-				case "Delete Row":
-					dataGridView.Rows.RemoveAt(rowValue);
-					this.dataGridView.ClearSelection();
-
-					break;
-
-				case "Insert Row":
-					{
-						DataSetting factor = new DataSetting();
-						factor.Type = numeralSystem.HEX;
-						myComponents.ViewSettingList[pageValComboBox.SelectedIndex].DataSetting.Insert(rowValue, factor);
-						this.dataGridView.ClearSelection();
-					}
-
-					break;
-
-				case "Copy Upper Row":
-					{
-						if (rowValue > 0)
-						{
-							DataSetting factor = new DataSetting(myComponents.ViewSettingList[pageValComboBox.SelectedIndex].DataSetting[rowValue - 1]);
-							factor.Group = null;
-							myComponents.ViewSettingList[pageValComboBox.SelectedIndex].DataSetting.Insert(rowValue, factor);
-							this.dataGridView.ClearSelection();
-
-						}
-
-					}
-
-					break;
-
-				case "Delete This Page":
-					{
-						var index = pageValComboBox.SelectedIndex;
-
-						if (index != 0)
-						{
-							DialogResult result = MessageBox.Show("Do you want to delete this page?",
-																	"Question",
-																	MessageBoxButtons.YesNo,
-																	MessageBoxIcon.Exclamation,
-																	MessageBoxDefaultButton.Button2);
-
-							if (result == DialogResult.Yes)
-							{
-								this.dataGridView.DataSource = null;
-								myComponents.ViewSettingList.RemoveAt(index);
-								pageValComboBox.Items.RemoveAt(index);
-								pageValComboBox.SelectedIndex = index - 1;
-
-							}
-
-						}
-						else
-						{
-							MessageBox.Show("Forbidden to delete first page.",
-												"Caution",
-												MessageBoxButtons.OK,
-												MessageBoxIcon.Warning);
-
-						}
-
-					}
-
-					break;
-
-				case "Insert Page":
-					{
-						DialogResult result = MessageBox.Show("Do you want to insert a page next to this page?",
-										"Question",
-										MessageBoxButtons.YesNo,
-										MessageBoxIcon.Exclamation,
-										MessageBoxDefaultButton.Button2);
-
-						if (result == DialogResult.Yes)
-						{
-							var index = pageValComboBox.SelectedIndex;
-							string groupName = GROUP_TEMPORARY_TAG;
-
-							var tmpVSettingFactor = new ViewSetting();
-
-							for (int i = 0; i < COLUMN_NUM; i++)
-							{
-								tmpVSettingFactor.DataSetting.Add(new DataSetting());
-							}
-
-							tmpVSettingFactor.DataSetting[0].Group = groupName;
-
-							myComponents.ViewSettingList.Insert((index + 1), tmpVSettingFactor);
-
-							pageValComboBox.Items.Insert((index + 1), groupName);
-
-							pageValComboBox.SelectedIndex = index + 1;
-
-						}
-
-					}
-
-					break;
-
-				case "Copy This Page":
-					{
-						DialogResult result = MessageBox.Show("Do you want to copy this page to next page?",
-										"Question",
-										MessageBoxButtons.YesNo,
-										MessageBoxIcon.Exclamation,
-										MessageBoxDefaultButton.Button2);
-
-						if (result == DialogResult.Yes)
-						{
-							var index = pageValComboBox.SelectedIndex;
-							string groupName = GROUP_TEMPORARY_TAG;
-
-							var tmpVSettingFactor = new ViewSetting();
-
-							foreach (var row in myComponents.ViewSettingList[index].DataSetting)
-							{
-								DataSetting factor = new DataSetting(row);
-								tmpVSettingFactor.DataSetting.Add(factor);
-
-							}
-
-							tmpVSettingFactor.DataSetting[0].Group = groupName;
-
-							myComponents.ViewSettingList.Insert((index + 1), tmpVSettingFactor);
-
-							pageValComboBox.Items.Insert((index + 1), groupName);
-
-							pageValComboBox.SelectedIndex = index + 1;
-
-						}
-
-					}
-
-					break;
-
-				default:
-					break;
-
-			}
-
-		}
-		#endif
-
 		private void pageValComboBox_SelectedIndexChanged(object sender, EventArgs e)
 		{
 			if (sender != null)
@@ -1701,11 +1179,11 @@ namespace rmApplication
 				int i = combo.Active;
 				if( i >= 0 )
 				{
-					refreshDataGridView( i );
+					refreshTreeView( i );
 
 					if (myComponents.CommActiveFlg == true)
 					{
-						bool errFlg = checkDataGridViewCells();
+						bool errFlg = checkTreeViewCells();
 
 						if ( errFlg == false )
 						{
@@ -1726,7 +1204,7 @@ namespace rmApplication
 
 		}
 
-		[ConnectBefore]
+		[GLib.ConnectBefore]
 		private void timingValTextBox_KeyPress(object sender, KeyPressEventArgs args)
 		{
 			if (args.Event.Key == Gdk.Key.Return) {
@@ -1739,8 +1217,12 @@ namespace rmApplication
 
 		private void boolDataLogButton_Click(object sender, EventArgs args)
 		{
-			if (buttonDataLog.Label == DATALOG_LOGGING_TEXT)
+			string DATALOG_LOGGING_TEXT = "Logging";
+			string DATALOG_START_TEXT = "Start Log";
+			
+			if (myComponents.LoggingActiveFlg == true)
 			{
+				myComponents.LoggingActiveFlg = false;
 				//buttonDataLog.Image = Properties.Resources.Complete_and_ok_gray;
 				buttonDataLog.Label = DATALOG_START_TEXT;
 
@@ -1759,6 +1241,7 @@ namespace rmApplication
 			}
 			else
 			{
+				myComponents.LoggingActiveFlg = true;
 				//buttonDataLog.Image = Properties.Resources.Complete_and_ok_green;
 				buttonDataLog.Label = DATALOG_LOGGING_TEXT;
 
@@ -1782,7 +1265,10 @@ namespace rmApplication
 
 		private void opclRsrcButton_Click(object sender, EventArgs args)
 		{
-			if (myComponents.CommActiveFlg == false)
+			string RSRC_OPEN = "Rsrc Open";
+			string RSRC_CLOSE = "Rsrc Close";
+
+			if (myComponents.RsrcActiveFlg == false)
 			{
 				bool retFlg = false;
 
@@ -1798,15 +1284,15 @@ namespace rmApplication
 				}
 
 				if ( retFlg == true ) {
+					myComponents.RsrcActiveFlg = true;
 					buttonRsrc.Label = RSRC_CLOSE;
-					myComponents.CommActiveFlg = true;
 
 				}
 
 			}
 			else
 			{
-				if (buttonComm.Label == COMM_CLOSE) {
+				if (myComponents.CommActiveFlg == true) {
 					buttonComm.Click ();
 
 				}
@@ -1825,8 +1311,8 @@ namespace rmApplication
 				}
 
 				if (retFlg == true) {
+					myComponents.RsrcActiveFlg = false;
 					buttonRsrc.Label = RSRC_OPEN;
-					myComponents.CommActiveFlg = false;
 
 				}
 
@@ -1836,8 +1322,16 @@ namespace rmApplication
 			
 		private void opclCommButton_Click(object sender, EventArgs args)
 		{
+			string COMM_OPEN = "Comm Open";
+			string COMM_CLOSE = "Comm Close";
+			
 			if( buttonComm.Label == COMM_OPEN )
 			{
+				if (checkbuttonCustomize.Active == true) {
+					PutWarningMessage("Under Customize mode.");
+					return;
+				}
+
 				if (System.IO.File.Exists(myComponents.ValidMapPath) == true)
 				{
 					DateTime now = System.IO.File.GetLastWriteTime(myComponents.ValidMapPath);
@@ -1860,16 +1354,21 @@ namespace rmApplication
 
 				}
 
-				if (buttonRsrc.Label == RSRC_OPEN) {
+				if (myComponents.RsrcActiveFlg == false) {
 					buttonRsrc.Click ();
 
 				}
 
-				bool errFlg = checkDataGridViewCells();
+				bool errFlg = checkTreeViewCells();
 
-				if ( (buttonRsrc.Label == RSRC_CLOSE) &&
+				if ( (myComponents.RsrcActiveFlg == true) &&
 					(errFlg == false) )
 				{
+					myComponents.CommActiveFlg = true;
+					
+					//opclCommButton.Image = Properties.Resources.FlagThread_red;
+					buttonComm.Label = COMM_CLOSE;
+
 					//Revise Timing
 					entryTiming.Text = "500";
 
@@ -1878,9 +1377,6 @@ namespace rmApplication
 					myCommProtocol.startStopWatch();
 
 					myCommProtocol.initial();
-
-					//opclCommButton.Image = Properties.Resources.FlagThread_red;
-					buttonComm.Label = COMM_CLOSE;
 
 					readDUTVersion();
 
@@ -1891,13 +1387,15 @@ namespace rmApplication
 			}
 			else
 			{
+				myComponents.CommActiveFlg = false;
+				
 				buttonComm.Label = COMM_OPEN;
 
 				myCommProtocol.setLogModeStop ();
 
 				myCommProtocol.stopStopWatch();
 
-				if (buttonDataLog.Label == DATALOG_LOGGING_TEXT)
+				if (myComponents.LoggingActiveFlg == true)
 				{
 					buttonDataLog.Click ();
 
@@ -1950,9 +1448,8 @@ namespace rmApplication
 
 			}
 
-			bool retFlg = commResource_CheckState();
-
-			if (retFlg == false)
+			if ((commResource_CheckState() == false) ||
+				(myComponents.CommActiveFlg == false) )
 			{
 				changeDispTx(false);
 				changeDispRx(false);
@@ -2108,7 +1605,7 @@ namespace rmApplication
 
 					}
 
-					if (buttonDataLog.Label == DATALOG_LOGGING_TEXT)
+					if (myComponents.LoggingActiveFlg == true)
 					{
 						if( LogStartTime == DateTime.MinValue )
 						{
@@ -2147,7 +1644,7 @@ namespace rmApplication
 			{
 				changeDispTx(true);
 
-				retFlg = false;
+				bool retFlg = false;
 
 				if (myComponents.CommunicationMode == Components.CommMode.Serial)
 				{
@@ -2221,13 +1718,13 @@ namespace rmApplication
 
 				if( factor.Check == false )
 				{
-					if ( factor.ErrNum == 0 )
+					if ( factor.ErrNum == ERR_NUM_NOTHING )
 					{
 						factor.Check = true;
 
 						if (myComponents.CommActiveFlg == true)
 						{
-							bool errFlg = checkDataGridViewCells();
+							bool errFlg = checkTreeViewCells();
 
 							if (errFlg == false) {
 								renewLogSetting ();
@@ -2245,7 +1742,6 @@ namespace rmApplication
 						PutWarningMessage( "Size, Address or Offset might be invalid." );
 						
 					}
-					
 
 				}
 				else
@@ -2254,7 +1750,7 @@ namespace rmApplication
 
 					if (myComponents.CommActiveFlg == true)
 					{
-						bool errFlg = checkDataGridViewCells();
+						bool errFlg = checkTreeViewCells();
 
 						if (errFlg == false) {
 							renewLogSetting ();
@@ -2268,6 +1764,8 @@ namespace rmApplication
 
 				}
 
+				checkTreeViewCells ();
+
 			}
 
 		}
@@ -2277,7 +1775,10 @@ namespace rmApplication
 			TreeIter iter;
 			if (storeMain.GetIterFromString (out iter, args.Path)) {
 				DataSetting factor = (DataSetting) storeMain.GetValue (iter, 0);
-				factor.AddrLock = !factor.AddrLock;
+				if ((factor.Check == false) ||
+					(checkbuttonCustomize.Active == true)) {
+					factor.AddrLock = !factor.AddrLock;
+				}
 
 			}
 
@@ -2304,22 +1805,11 @@ namespace rmApplication
 					(string.IsNullOrEmpty (factor.Group) != true) ) {
 					string oldName = factor.Group;
 
-					TreeIter iter;
-					if (comboboxPage.Model.GetIterFirst (out iter)) {
-						do
-						{
-							string name = (string) comboboxPage.Model.GetValue (iter, 0);
-
-							if( name == oldName )
-							{
-								factor.Group = args.NewText;
-								comboboxPage.Model.SetValue (iter, 0, args.NewText);
-							}
-
-
-						} while(comboboxPage.Model.IterNext (ref iter));
-
-					}
+					var index = comboboxPage.Active;
+					factor.Group = args.NewText;
+					comboboxPage.RemoveText(index);
+					comboboxPage.InsertText(index, args.NewText);
+					comboboxPage.Active = index;
 
 				}
 
@@ -2333,7 +1823,10 @@ namespace rmApplication
 		{
 			if (storeMain.GetIterFromString (out userIter, args.Path)) {
 				DataSetting factor = (DataSetting) storeMain.GetValue (userIter, 0);
-				factor.Size = args.NewText;
+				if ((factor.Check == false) ||
+				    (checkbuttonCustomize.Active == true)) {
+					factor.Size = args.NewText;
+				}
 
 			}
 
@@ -2345,27 +1838,31 @@ namespace rmApplication
 		{
 			if (storeMain.GetIterFromString (out userIter, args.Path)) {
 				DataSetting factor = (DataSetting) storeMain.GetValue (userIter, 0);
-				string variableText = args.NewText;
+				if ((factor.Check == false) ||
+					(checkbuttonCustomize.Active == true)) {
+					string variableText = args.NewText;
 
-				factor.Variable = variableText;
+					factor.Variable = variableText;
 
-				if ((myComponents.MapList != null) &&
-					(myComponents.MapList.Count > 0) &&
-					(string.IsNullOrEmpty (variableText) != true) ) {
-					MapFactor result = myComponents.MapList.Find (key => key.VariableName == variableText);
+					if ((myComponents.MapList != null) &&
+						(myComponents.MapList.Count > 0) &&
+						(string.IsNullOrEmpty (variableText) != true) ) {
+						MapFactor result = myComponents.MapList.Find (key => key.VariableName == variableText);
 
-					if (result != null) {
-						if ((int.Parse (result.Size) >= 1) &&
-							(int.Parse (result.Size) <= 4)) {
-							factor.Size = result.Size;
+						if (result != null) {
+							if ((int.Parse (result.Size) >= 1) &&
+								(int.Parse (result.Size) <= 4)) {
+								factor.Size = result.Size;
+
+							}
+
+							factor.Address = result.Address;
+
+						} else {
+							factor.Check = false;
+							factor.Address = null;
 
 						}
-
-						factor.Address = result.Address;
-
-					} else {
-						factor.Check = false;
-						factor.Address = null;
 
 					}
 
@@ -2381,7 +1878,10 @@ namespace rmApplication
 		{
 			if (storeMain.GetIterFromString (out userIter, args.Path)) {
 				DataSetting factor = (DataSetting) storeMain.GetValue (userIter, 0);
-				factor.Address = args.NewText;
+				if ((factor.Check == false) ||
+					(checkbuttonCustomize.Active == true)) {
+					factor.Address = args.NewText;
+				}
 
 			}
 
@@ -2393,7 +1893,10 @@ namespace rmApplication
 		{
 			if (storeMain.GetIterFromString (out userIter, args.Path)) {
 				DataSetting factor = (DataSetting) storeMain.GetValue (userIter, 0);
-				factor.Offset = args.NewText;
+				if ((factor.Check == false) ||
+					(checkbuttonCustomize.Active == true)) {
+					factor.Offset = args.NewText;
+				}
 
 			}
 
@@ -2405,7 +1908,10 @@ namespace rmApplication
 		{
 			if (storeMain.GetIterFromString (out userIter, args.Path)) {
 				DataSetting factor = (DataSetting) storeMain.GetValue (userIter, 0);
-				factor.Name = args.NewText;
+				if ((factor.Check == false) ||
+					(checkbuttonCustomize.Active == true)) {
+					factor.Name = args.NewText;
+				}
 
 			}
 
@@ -2460,7 +1966,7 @@ namespace rmApplication
 			if (storeMain.GetIterFromString (out userIter, args.Path)) {
 				DataSetting factor = (DataSetting) storeMain.GetValue (userIter, 0);
 
-				if ( factor.ErrNum != 0 ) {
+				if ( factor.ErrNum != ERR_NUM_NOTHING ) {
 					PutWarningMessage( "Size, Address or Offset might be invalid." );
 					return;
 
@@ -2498,19 +2004,9 @@ namespace rmApplication
 			if (storeMain.GetIterFromString (out iter, args.Path)) {
 				DataSetting factor = (DataSetting) storeMain.GetValue (iter, 0);
 
-				if( factor.ErrNum == 0 )
-				{
-					string sizeText = factor.Size;
-					string addressText = factor.Address;
-					string offsetText = factor.Offset;
-					string writeText = factor.WriteText;
-
-					bool retFlg = commResource_CheckState ();
-
-					if (retFlg == true) {
-						writeData (sizeText, addressText, offsetText, writeText);
-
-					}
+				if( ( factor.ErrNum == ERR_NUM_NOTHING ) &&
+					(string.IsNullOrEmpty (factor.WriteText) != true) ) {
+					writeData (factor.Size, factor.Address, factor.Offset, factor.WriteText);
 
 				}
 
@@ -2759,10 +2255,10 @@ namespace rmApplication
 
 			if (validFlg == true) {
 				(cell as Gtk.CellRendererText).Foreground = "black";
-				errNum &= ~(0x01);
+				errNum &= ~(ERR_NUM_SIZE);
 			} else {
 				(cell as Gtk.CellRendererText).Foreground = "red";
-				errNum |= 0x01;
+				errNum |= ERR_NUM_SIZE;
 			}
 
 			item.ErrNum = errNum;
@@ -2802,10 +2298,10 @@ namespace rmApplication
 
 			if (validFlg == true) {
 				(cell as Gtk.CellRendererText).Foreground = "black";
-				errNum &= ~(0x02);
+				errNum &= ~(ERR_NUM_ADDRESS);
 			} else {
 				(cell as Gtk.CellRendererText).Foreground = "red";
-				errNum |= 0x02;
+				errNum |= ERR_NUM_ADDRESS;
 			}
 
 			item.ErrNum = errNum;
@@ -2833,10 +2329,10 @@ namespace rmApplication
 
 			if (validFlg == true) {
 				(cell as Gtk.CellRendererText).Foreground = "black";
-				errNum &= ~(0x04);
+				errNum &= ~(ERR_NUM_OFFSET);
 			} else {
 				(cell as Gtk.CellRendererText).Foreground = "red";
-				errNum |= 0x04;
+				errNum |= ERR_NUM_OFFSET;
 			}
 
 			item.ErrNum = errNum;
@@ -2890,6 +2386,218 @@ namespace rmApplication
 			entryTmpMessage.Text = text;
 			WarningShowUpCount = 0;
 			
+		}
+
+		private void checkbuttonCustomize_Click(object sender, EventArgs args)
+		{
+			if (checkbuttonCustomize.Active == true) {
+				if (myComponents.CommActiveFlg == true) {
+					PutWarningMessage("Under Communication.");
+					checkbuttonCustomize.Active = false;
+
+				} else {
+					treeviewMain.ButtonPressEvent += new ButtonPressEventHandler(OnItemButtonPressed);
+					var columns = treeviewMain.Columns;
+					columns [1].Visible = true;		// Column: Group
+				}
+
+			} else {
+				treeviewMain.ButtonPressEvent -= new ButtonPressEventHandler(OnItemButtonPressed);
+				var columns = treeviewMain.Columns;
+				columns [1].Visible = false;		// Column: Group
+
+				TreeIter iter;
+				if (storeMain.GetIterFirst (out iter))
+				{
+					int i = 1;
+
+					do
+					{
+						DataSetting factor = (DataSetting) storeMain.GetValue (iter, 0);
+
+						factor.RowCount = i;
+						i++;
+
+					} while(storeMain.IterNext (ref iter));
+
+				}
+
+			}
+
+		}
+
+		[GLib.ConnectBeforeAttribute]
+		protected void OnItemButtonPressed (object sender, ButtonPressEventArgs e)
+		{
+			if (e.Event.Button == 3) /* right click */
+			{
+				Menu contextMenu = new Menu();
+
+				MenuItem deleteItem = new MenuItem("Delete this item");
+				deleteItem.ButtonPressEvent += new ButtonPressEventHandler(OnDeleteItemButtonPressed);
+				MenuItem insertItem = new MenuItem("Insert an item to next row");
+				insertItem.ButtonPressEvent += new ButtonPressEventHandler(OnInsertItemButtonPressed);
+				MenuItem copyItem = new MenuItem("Copy this item to next row");
+				copyItem.ButtonPressEvent += new ButtonPressEventHandler(OnCopyItemButtonPressed);
+
+				MenuItem deletePage = new MenuItem("Delete this page");
+				deletePage.ButtonPressEvent += new ButtonPressEventHandler(OnDeletePageButtonPressed);
+				MenuItem insertPage = new MenuItem("Insert a page to next");
+				insertPage.ButtonPressEvent += new ButtonPressEventHandler(OnInsertPageButtonPressed);
+				MenuItem copyPage = new MenuItem("Copy this page to next");
+				copyPage.ButtonPressEvent += new ButtonPressEventHandler(OnCopyPageButtonPressed);
+
+				contextMenu.Add(deleteItem);
+				contextMenu.Add(insertItem);
+				contextMenu.Add(copyItem);
+
+				contextMenu.Add(deletePage);
+				contextMenu.Add(insertPage);
+				contextMenu.Add(copyPage);
+
+				contextMenu.ShowAll();
+				contextMenu.Popup();
+			}
+		}
+
+		protected void OnDeleteItemButtonPressed (object sender, ButtonPressEventArgs e)
+		{
+			TreeIter iter;
+			if (treeviewMain.Selection.GetSelected (out iter)) {
+				var path = storeMain.GetPath (iter);
+				var indices = path.Indices;
+
+				if (indices.Length == 1) {
+					if (indices [0] == 0) {
+						PutWarningMessage( "Can't delete first row." );
+
+					} else {
+						storeMain.Remove (ref iter);
+
+					}
+
+				}
+			}
+
+		}
+
+		protected void OnInsertItemButtonPressed (object sender, ButtonPressEventArgs e)
+		{
+			TreeIter iter;
+			if (treeviewMain.Selection.GetSelected (out iter)) {
+				var path = storeMain.GetPath (iter);
+				var indices = path.Indices;
+
+				if (indices.Length == 1) {
+					DataSetting tmp = new DataSetting ();
+					storeMain.InsertWithValues (indices[0]+1, tmp);
+
+				}
+
+			}
+
+		}
+
+		protected void OnCopyItemButtonPressed (object sender, ButtonPressEventArgs e)
+		{
+			TreeIter iter;
+			if (treeviewMain.Selection.GetSelected (out iter)) {
+				var path = storeMain.GetPath (iter);
+				var indices = path.Indices;
+
+				if (indices.Length == 1) {
+					DataSetting tmp = new DataSetting ((DataSetting) storeMain.GetValue (iter, 0));
+					tmp.Group = "";
+					storeMain.InsertWithValues (indices[0]+1, tmp);
+
+				}
+
+			}
+
+		}
+
+		protected void OnDeletePageButtonPressed (object sender, ButtonPressEventArgs e)
+		{
+			var index = comboboxPage.Active;
+
+			if (index != 0)
+			{
+				bool result = MessageBox.ShowQuestion ("Do you want to delete this page?");
+				
+				if (result == true)
+				{
+					myComponents.ViewSettingList.RemoveAt(index);
+					comboboxPage.RemoveText (index);
+					comboboxPage.Active = index - 1;
+
+				}
+
+			}
+			else
+			{
+				PutWarningMessage( "Can't delete first page." );
+
+			}
+
+		}
+
+		protected void OnInsertPageButtonPressed (object sender, ButtonPressEventArgs e)
+		{
+			bool result = MessageBox.ShowQuestion ("Do you want to insert a page next to this page?");
+			
+			if (result == true)
+			{
+				var index = comboboxPage.Active;
+				string groupName = GROUP_TEMPORARY_TAG;
+
+				var tmpVSettingFactor = new ViewSetting();
+
+				for (int i = 0; i < DEFAULT_COLUMNS; i++)
+				{
+					tmpVSettingFactor.DataSetting.Add(new DataSetting());
+				}
+
+				tmpVSettingFactor.DataSetting[0].Group = groupName;
+
+				myComponents.ViewSettingList.Insert((index + 1), tmpVSettingFactor);
+
+				comboboxPage.InsertText((index + 1), groupName);
+
+				comboboxPage.Active = index + 1;
+
+			}
+
+		}
+
+		protected void OnCopyPageButtonPressed (object sender, ButtonPressEventArgs e)
+		{
+			bool result = MessageBox.ShowQuestion ("Do you want to copy this page to next page?");
+			
+			if (result == true)
+			{
+				var index = comboboxPage.Active;
+				string groupName = GROUP_TEMPORARY_TAG;
+
+				var tmpVSettingFactor = new ViewSetting();
+
+				foreach (var row in myComponents.ViewSettingList[index].DataSetting)
+				{
+					DataSetting factor = new DataSetting(row);
+					tmpVSettingFactor.DataSetting.Add(factor);
+
+				}
+
+				tmpVSettingFactor.DataSetting[0].Group = groupName;
+
+				myComponents.ViewSettingList.Insert((index + 1), tmpVSettingFactor);
+
+				comboboxPage.InsertText((index + 1), groupName);
+
+				comboboxPage.Active = index + 1;
+
+			}
+
+
 		}
 
 	}

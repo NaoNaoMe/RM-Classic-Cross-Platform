@@ -1,8 +1,6 @@
 ﻿using System;
-//using System.Collections;
 using System.Collections.Generic;
 using System.Xml.Serialization;
-//using System.IO;
 
 using Gtk;
 
@@ -42,19 +40,25 @@ namespace rmApplication
 
 		private void openViewFileToolStripMenuItem_Click (object sender, EventArgs args)
 		{
+			if (subViewControl1.myComponents.CommActiveFlg == true)
 			{
-				FileChooserDialog ofd = new FileChooserDialog ("Choose the file to open",
+				MessageBox.ShowWarning ("Stop communication.");
+
+			}
+			else
+			{
+				FileChooserDialog fcd = new FileChooserDialog ("Choose the file to open",
 					this,
 					FileChooserAction.Open,
 					"Cancel",ResponseType.Cancel,
 					"Open",ResponseType.Accept);
 
-				ofd.Filter = new FileFilter ();
-				ofd.Filter.AddPattern ("*.xml");
+				fcd.Filter = new FileFilter ();
+				fcd.Filter.AddPattern ("*.xml");
 
-				if (ofd.Run() == (int)ResponseType.Accept)
+				if (fcd.Run() == (int)ResponseType.Accept)
 				{
-					string pathName = ofd.Filename;
+					string pathName = fcd.Filename;
 
 					XmlSerializer serializer = new XmlSerializer(typeof(ViewSetting));
 
@@ -77,6 +81,7 @@ namespace rmApplication
 					if (deserializedData != null)
 					{
 						subViewControl1.loadViewSettingFile(deserializedData);
+						subViewControl1.checkTreeViewCells ();
 
 						string fileName = System.IO.Path.GetFileNameWithoutExtension(pathName);
 						string viewName = subViewControl1.getViewName(fileName);
@@ -90,7 +95,7 @@ namespace rmApplication
 
 				}
 
-				ofd.Destroy();
+				fcd.Destroy();
 
 			}
 
@@ -105,18 +110,18 @@ namespace rmApplication
 			}
 			else
 			{
-				FileChooserDialog ofd = new FileChooserDialog ("Choose the file to open",
+				FileChooserDialog fcd = new FileChooserDialog ("Choose the file to open",
 					this,
 					FileChooserAction.Open,
 					"Cancel",ResponseType.Cancel,
 					"Open",ResponseType.Accept);
 
-				ofd.Filter = new FileFilter ();
-				ofd.Filter.AddPattern ("*.map");
+				fcd.Filter = new FileFilter ();
+				fcd.Filter.AddPattern ("*.map");
 
-				if (ofd.Run () == (int)ResponseType.Accept)
+				if (fcd.Run () == (int)ResponseType.Accept)
 				{
-					string pathName = ofd.Filename;
+					string pathName = fcd.Filename;
 
 					if (subViewControl1.loadMapFile(pathName) == false)
 					{
@@ -126,7 +131,7 @@ namespace rmApplication
 
 				}
 					
-				ofd.Destroy();
+				fcd.Destroy();
 
 			}
 
@@ -134,17 +139,17 @@ namespace rmApplication
 
 		private void saveViewFileToolStripMenuItem_Click(object sender, EventArgs e)
 		{
-			FileChooserDialog ofd = new FileChooserDialog ("Choose the file to save",
+			FileChooserDialog fcd = new FileChooserDialog ("Choose the file to save",
 				this,
 				FileChooserAction.Save,
 				"Cancel",ResponseType.Cancel,
 				"Save",ResponseType.Accept);
 			string text = subViewControl1.getViewSettingFileName ();
-			ofd.CurrentName = text + ".xml";
-			ofd.Filter = new FileFilter ();
-			ofd.Filter.AddPattern ("*.xml");
+			fcd.CurrentName = text + ".xml";
+			fcd.Filter = new FileFilter ();
+			fcd.Filter.AddPattern ("*.xml");
 
-			if (ofd.Run() == (int)ResponseType.Accept)
+			if (fcd.Run() == (int)ResponseType.Accept)
 			{
 				var tmpVSettingFactor = new ViewSetting();
 
@@ -160,10 +165,20 @@ namespace rmApplication
 
 				try
 				{
-					System.IO.FileStream fs = new System.IO.FileStream(ofd.Filename, System.IO.FileMode.Create);
+					System.IO.FileStream fs = new System.IO.FileStream(fcd.Filename, System.IO.FileMode.Create);
 					XmlSerializer serializer = new XmlSerializer(typeof(ViewSetting));
 					serializer.Serialize(fs, tmpVSettingFactor);
 					fs.Close();
+
+					string fileName = System.IO.Path.GetFileNameWithoutExtension(fcd.Filename);
+					string viewName = subViewControl1.getViewName(fileName);
+
+					if (viewName != null)
+					{
+						this.Title = viewName + " - " + WINDOW_TITLE;
+					}
+
+
 				}
 				catch (Exception ex)
 				{
@@ -173,7 +188,7 @@ namespace rmApplication
 
 			}
 
-			ofd.Destroy();
+			fcd.Destroy();
 
 		}
 
@@ -186,16 +201,16 @@ namespace rmApplication
 
 			}
 
-			FileChooserDialog ofd = new FileChooserDialog ("Choose the file to save",
+			FileChooserDialog fcd = new FileChooserDialog ("Choose the file to save",
 				this,
 				FileChooserAction.Save,
 				"Cancel",ResponseType.Cancel,
 				"Save",ResponseType.Accept);
-			ofd.CurrentName = "test.map";
-			ofd.Filter = new FileFilter ();
-			ofd.Filter.AddPattern ("*.map");
+			fcd.CurrentName = "test.map";
+			fcd.Filter = new FileFilter ();
+			fcd.Filter.AddPattern ("*.map");
 
-			if (ofd.Run() == (int)ResponseType.Accept)
+			if (fcd.Run() == (int)ResponseType.Accept)
 			{
 				List<string> textList = new List<string>();
 
@@ -205,7 +220,7 @@ namespace rmApplication
 				{
 					try
 					{
-						System.IO.StreamWriter sw = new System.IO.StreamWriter( ofd.Filename,
+						System.IO.StreamWriter sw = new System.IO.StreamWriter( fcd.Filename,
 							false,
 							System.Text.Encoding.GetEncoding("utf-8"));
 
@@ -229,7 +244,7 @@ namespace rmApplication
 
 			}
 
-			ofd.Destroy();
+			fcd.Destroy();
 
 
 		}
@@ -242,9 +257,9 @@ namespace rmApplication
 
 		private void optionsToolStripMenuItem_Click(object sender, EventArgs e)
 		{
-			if (subViewControl1.myComponents.CommActiveFlg == true)
+			if (subViewControl1.myComponents.RsrcActiveFlg == true)
 			{
-				MessageBox.ShowWarning ("Stop communication.");
+				MessageBox.ShowWarning ("Close communication resources.");
 
 			}
 			else
@@ -252,6 +267,8 @@ namespace rmApplication
 				OptionDialog od = new OptionDialog (subViewControl1);
 				od.Run ();
 				od.Destroy ();
+
+				subViewControl1.checkTreeViewCells ();
 
 			}
 

@@ -178,9 +178,7 @@ namespace rmApplication
 			string address = entryAddress.Text;
 			string size = entrySize.Text;
 
-			bool flg = SubViewCtrl.commResource_CheckState();
-
-			if (flg == false)
+			if (SubViewCtrl.myComponents.CommActiveFlg == false)
 			{
 				return;
 
