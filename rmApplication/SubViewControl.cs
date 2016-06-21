@@ -836,12 +836,6 @@ namespace rmApplication
 
 		private bool serialPort_DataReceived()
 		{
-			if (myComponents.CommActiveFlg == false)
-			{
-				return true;
-
-			}
-
 			if (serialPort.IsOpen == false)
 			{
 				return true;
@@ -854,11 +848,14 @@ namespace rmApplication
 
 				if( size > 0 )
 				{
-					byte[] rcvbuff = new byte[size];
+					byte [] rcvbuff = new byte [size];
 
-					serialPort.Read(rcvbuff, 0, size);
+					serialPort.Read (rcvbuff, 0, size);
 
-					myCommProtocol.decode(rcvbuff);
+					if (myComponents.CommActiveFlg == true) {
+						myCommProtocol.decode (rcvbuff);
+
+					}
 
 				}
 
@@ -960,12 +957,6 @@ namespace rmApplication
 
 		private void sockets_DataReceived(IAsyncResult ar)
 		{
-			if (myComponents.CommActiveFlg == false)
-			{
-				return;
-
-			}
-
 			SocketsAsyncParam ap = (SocketsAsyncParam)ar.AsyncState;
 
 			if(ap.Client.Connected == false)
@@ -985,7 +976,10 @@ namespace rmApplication
 
 			}
 
-			myCommProtocol.decode(rcvbuff);
+			if (myComponents.CommActiveFlg == true) {
+				myCommProtocol.decode (rcvbuff);
+
+			}
 
 			stream.BeginRead(ap.ReadBuff, 0, ap.ReadBuff.Length, new AsyncCallback(sockets_DataReceived), ap);
 
@@ -995,6 +989,11 @@ namespace rmApplication
 		private bool sockets_DataSend(List<byte> frame)
 		{
 			bool retFlg = false;
+
+			if (SocketsParam.Client == null) {
+				return retFlg;
+
+			}
 
 			System.Net.Sockets.NetworkStream stream = SocketsParam.Client.GetStream();
 
@@ -1030,7 +1029,6 @@ namespace rmApplication
 
 						stream.BeginRead(SocketsParam.ReadBuff, 0, SocketsParam.ReadBuff.Length, new AsyncCallback(sockets_DataReceived), SocketsParam);
 
-						stream = SocketsParam.Client.GetStream();
 						retFlg = true;
 
 					}
@@ -1049,6 +1047,7 @@ namespace rmApplication
 				if (SocketsParam.Client != null)
 				{
 					SocketsParam.Client.Close();
+					SocketsParam.Client = null;
 					retFlg = true;
 
 				}
@@ -1079,8 +1078,7 @@ namespace rmApplication
 				break;
 
 			case Components.CommMode.NetWork:
-				if ( SocketsParam.Client.Connected == true)
-				{
+				if (SocketsParam.Client != null) {
 					retFlg = true;
 
 				}
